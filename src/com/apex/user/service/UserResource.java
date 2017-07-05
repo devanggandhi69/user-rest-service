@@ -8,13 +8,14 @@ import java.text.SimpleDateFormat;
 import java.util.Iterator;
 import java.util.List;
 
-
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import org.hibernate.HibernateException;
 import org.hibernate.Session;
+import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import com.hibernet.util.HibernateUtil;
 import com.hibernet.vo.User;
@@ -23,9 +24,9 @@ import com.hibernet.vo.User;
 public class UserResource {
 
 	@GET
-	@Path("/{user_name}/{c_name}")
+	@Path("/add/{user_name}/{c_name}")
 	@Produces({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
-	public void saveUser(@PathParam("user_name") String name, @PathParam("c_name") String cname) {
+	public User saveUser(@PathParam("user_name") String name, @PathParam("c_name") String cname) {
 
 		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 		Session session = HibernateUtil.getSessionFactory().openSession();
@@ -36,40 +37,57 @@ public class UserResource {
 		user.setUsername(name);
 		user.setCreatedBy(cname);
 		user.setCreatedDate(new Date(0));
-
 		session.save(user);
 		session.getTransaction().commit();
-		// if (!session.getTransaction().wasCommitted()) {
-		// session.getTransaction().commit();
-		// }
+	
 		session.close();
+
+		return user;
 	}
 
 	@GET
 	@Path("/getAll")
 	@Produces({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
-	public User getAllUser() {
-		User user = new User();
+	public void getAllUser() {
+
 		Session sess = HibernateUtil.getSessionFactory().openSession();
 		Transaction tx = null;
-		try {
+		try{
 			tx = sess.beginTransaction();
 			List list = sess.createQuery("from User").list();
-			Iterator itr = list.iterator();
-			while (itr.hasNext()) {
-				user = (User) itr.next();
-				user.setUserId((int) list.get(1));
-				user.setUsername((String) list.get(2));
-				user.setCreatedBy((String) list.get(3));
-				user.setCreatedDate((Date) list.get(4));
-				return user;
+
+			//////////////
+			for (Iterator iterator = list.iterator(); iterator.hasNext();) {
+				User user = (User) iterator.next();
+				System.out.print("First Name: " + user.getUserId());
+				System.out.print("  Last Name: " + user.getUsername());
+				System.out.println("  Salary: " + user.getCreatedBy());
+				System.out.println("  Salary: " + user.getCreatedDate());
 			}
+			tx.commit();
+		}catch (HibernateException e) {
+	         if (tx!=null) tx.rollback();
+	         e.printStackTrace(); 
+	      }finally {
+	         sess.close(); 
+	      }
+	   }
+
+	@GET
+	@Path("/delete/{id}")
+	@Produces({ MediaType.APPLICATION_XML })
+	public void delUser(@PathParam("id") Integer userId) {
+		Session sess = (Session) HibernateUtil.getSessionFactory();
+		User user = new User();
+		user.setUserId(userId);
+		try {
+			((SessionFactory) sess).openSession();
+			sess.delete(user);
+			System.out.println("Row deleted which has id =" + userId);
 		} catch (Exception e) {
-			System.out.println(e);
-		} finally {
-			sess.close();
+			sess.getTransaction().rollback();
+			e.printStackTrace();
 		}
-		return user;
 	}
 
 }

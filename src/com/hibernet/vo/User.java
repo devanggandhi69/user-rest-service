@@ -3,12 +3,12 @@ package com.hibernet.vo;
 import java.sql.Date;
 
 import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement
 public class User {
-	// @GeneratedValue(strategy = GenerationType.IDENTITY)
+	
+	@GeneratedValue
 	private int userId;
 	private String username;
 	private String createdBy;
